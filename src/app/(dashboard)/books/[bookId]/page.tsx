@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, Volume2, Download, RefreshCw } from 'lucide-reac
 import type { Book, BookPage } from '@/types/database';
 
 export default function BookDetailPage() {
-  const params = useParams();
+  const params = useParams<{ bookId: string }>();
   const router = useRouter();
   const [book, setBook] = useState<Book & { pages: BookPage[] } | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -20,14 +20,14 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     const fetchBook = async () => {
+      if (!params.bookId) return;
       const response = await fetch(`/api/books/${params.bookId}`);
       const data = await response.json();
       setBook(data);
       setLoading(false);
-      
+
       if (data.status === 'generating') {
         setGenerating(true);
-        // Poll for updates
         const interval = setInterval(async () => {
           const res = await fetch(`/api/books/${params.bookId}`);
           const updated = await res.json();
