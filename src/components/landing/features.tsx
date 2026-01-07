@@ -9,7 +9,7 @@ const features = [
   {
     icon: Mic,
     title: 'Parent Voice Narration',
-    description: 'Clone your voice to narrate bedtime stories, even when you're traveling.',
+    description: "Clone your voice to narrate bedtime stories, even when you're traveling.",
   },
   {
     icon: Brain,
