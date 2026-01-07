@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from 'zustand';
 import type { VoiceProfile } from '@/types/database';
 
