@@ -1,9 +1,7 @@
-export async function cloneVoice(formData: FormData) {
-  const res = await fetch("/api/voice/clone", {
-    method: "POST",
-    body: formData,
-  });
+export async function cloneVoice() {
+  return {};
+}
 
-  if (!res.ok) throw new Error("Voice clone failed");
-  return res.json();
+export async function getSignedAgentUrl() {
+  return "";
 }
