@@ -30,7 +30,13 @@ export default function NewChildPage() {
     if (!profile?.family_id) return;
     setLoading(true);
     try {
-      await addChild({ ...formData, family_id: profile.family_id });
+      await addChild({
+        ...formData,
+        family_id: profile.family_id,
+        preferred_language: 'en',
+        photo_url: null,
+        reading_level: null,
+      });
       router.push('/children');
     } catch (error) {
       console.error('Error adding child:', error);
