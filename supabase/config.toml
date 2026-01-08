@@ -1,5 +1,4 @@
 # Supabase CLI configuration
-project_id = "mwlxqnytywhemzllruky"
 [api]
 enabled = true
 port = 54321
@@ -44,4 +43,3 @@ enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 redirect_uri = "http://localhost:54321/auth/v1/callback"
-

@@ -1,20 +1,15 @@
-export const runtime = "nodejs";
-
 import { stripe } from '@/lib/stripe/server';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Lazy initialization - only creates client when function is called
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+// Use service role for webhooks (no user context)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin();
   const body = await request.text();
   const signature = request.headers.get('stripe-signature')!;
 
@@ -36,10 +31,12 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const metadata = session.metadata || {};
-
+        
+        // Check if this is a gift purchase
         if (metadata.type === 'gift_purchase') {
-          await handleGiftPurchase(supabaseAdmin, session, metadata);
+          await handleGiftPurchase(session, metadata);
         } else if (metadata.family_id && metadata.tier) {
+          // Regular subscription
           await supabaseAdmin
             .from('subscriptions')
             .upsert({
@@ -55,7 +52,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-
+        
         await supabaseAdmin
           .from('subscriptions')
           .update({
@@ -68,7 +65,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-
+        
         await supabaseAdmin
           .from('subscriptions')
           .update({ status: 'canceled', tier: 'free' })
@@ -78,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-
+        
         await supabaseAdmin
           .from('subscriptions')
           .update({ status: 'past_due' })
@@ -94,8 +91,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Handle gift subscription purchase
 async function handleGiftPurchase(
-  supabaseAdmin: ReturnType<typeof createClient>,
   session: Stripe.Checkout.Session,
   metadata: Record<string, string>
 ) {
@@ -112,12 +109,15 @@ async function handleGiftPurchase(
     purchaser_id,
   } = metadata;
 
+  // Generate unique gift code
   const { data: codeResult } = await supabaseAdmin.rpc('generate_gift_code');
   const giftCode = codeResult || generateFallbackCode();
 
+  // Calculate expiry (1 year from purchase)
   const expiresAt = new Date();
   expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
+  // Create gift code record
   const { data: gift, error } = await supabaseAdmin
     .from('gift_codes')
     .insert({
@@ -147,9 +147,10 @@ async function handleGiftPurchase(
     throw error;
   }
 
+  // If sending directly to recipient, queue the email
   if (send_to_recipient === 'true' && recipient_email) {
     const sendAt = send_date ? new Date(send_date) : new Date();
-
+    
     await supabaseAdmin
       .from('gift_email_queue')
       .insert({
@@ -160,16 +161,25 @@ async function handleGiftPurchase(
       });
   }
 
+  // Send confirmation email to purchaser
+  // (In production, integrate with email service like Resend, SendGrid, etc.)
   console.log(`Gift code created: ${giftCode} for ${recipient_email || 'purchaser to share'}`);
 }
 
+// Fallback code generator if DB function fails
 function generateFallbackCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let result = 'STORY-';
-  for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 4; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
   result += '-';
-  for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 4; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
   result += '-';
-  for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 4; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
   return result;
 }

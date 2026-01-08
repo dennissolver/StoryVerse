@@ -1,27 +1,15 @@
-import Stripe from "stripe";
-import { assertEnv } from "@/lib/utils";
+import Stripe from 'stripe';
 
-/**
- * Server-side Stripe client
- */
-export const stripe = new Stripe(assertEnv("STRIPE_SECRET_KEY"), {
-  apiVersion: "2024-04-10",
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-06-20',
+  typescript: true,
 });
 
-/**
- * Subscription tiers used by UI + billing logic
- */
 export const SUBSCRIPTION_TIERS = {
-  FREE: {
-    id: "free",
-    priceId: null,
-    features: ["Basic access"],
-  },
-  PRO: {
-    id: "pro",
-    priceId: "price_pro",
-    features: ["Unlimited stories", "Voice narration"],
-  },
-};
+  free: { name: 'Free', price: 0, booksPerMonth: 1, voiceClones: 0 },
+  seedling: { name: 'Seedling', price: 999, booksPerMonth: 2, voiceClones: 1, priceId: process.env.STRIPE_PRICE_SEEDLING },
+  growing: { name: 'Growing', price: 1999, booksPerMonth: 4, voiceClones: 2, priceId: process.env.STRIPE_PRICE_GROWING },
+  family: { name: 'Family', price: 2999, booksPerMonth: 999, voiceClones: 5, priceId: process.env.STRIPE_PRICE_FAMILY },
+} as const;
 
 export type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;

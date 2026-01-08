@@ -1,6 +1,10 @@
-export type FamilyPreferences = {};
-export type ChildPreferences = {};
-
-export function generateContentGuidelines() {
-  return "";
-}
+export {
+  generateContentGuidelines,
+  canIncludeMagic,
+  canIncludeTalkingAnimals,
+  getModestyLevel,
+  getDietaryRestrictions,
+  type FamilyPreferences,
+  type ChildPreferences,
+  type ContentGuidelines,
+} from './guidelines';

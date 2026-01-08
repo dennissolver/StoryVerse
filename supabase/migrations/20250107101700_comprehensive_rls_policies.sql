@@ -52,13 +52,13 @@ DROP POLICY IF EXISTS "Service role can manage subscriptions" ON subscriptions;
 -- ============================================
 
 -- Helper function to get current user's family_id
-CREATE OR REPLACE FUNCTION public.get_user_family_id()
+CREATE OR REPLACE FUNCTION auth.user_family_id()
 RETURNS UUID AS $$
   SELECT family_id FROM public.user_profiles WHERE id = auth.uid()
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Helper function to check if user has specific role
-CREATE OR REPLACE FUNCTION public.user_has_role(required_role TEXT)
+CREATE OR REPLACE FUNCTION auth.user_has_role(required_role TEXT)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.family_members 
@@ -69,7 +69,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Helper function to check if user can modify settings
-CREATE OR REPLACE FUNCTION public.user_can_modify_settings()
+CREATE OR REPLACE FUNCTION auth.user_can_modify_settings()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.family_members 
@@ -85,11 +85,11 @@ $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 DROP POLICY IF EXISTS "Users can view their family" ON families;
 CREATE POLICY "Users can view their family" ON families
-  FOR SELECT USING (id = public.get_user_family_id());
+  FOR SELECT USING (id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Users can update their family" ON families;
 CREATE POLICY "Users can update their family" ON families
-  FOR UPDATE USING (id = public.get_user_family_id() AND public.user_can_modify_settings());
+  FOR UPDATE USING (id = auth.user_family_id() AND auth.user_can_modify_settings());
 
 -- ============================================
 -- USER_PROFILES - Users belong to families
@@ -101,7 +101,7 @@ CREATE POLICY "Users can view their own profile" ON user_profiles
 
 DROP POLICY IF EXISTS "Users can view family members profiles" ON user_profiles;
 CREATE POLICY "Users can view family members profiles" ON user_profiles
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
 CREATE POLICY "Users can update their own profile" ON user_profiles
@@ -113,15 +113,15 @@ CREATE POLICY "Users can update their own profile" ON user_profiles
 
 DROP POLICY IF EXISTS "Family members can view children" ON children;
 CREATE POLICY "Family members can view children" ON children
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Authorized members can insert children" ON children;
 CREATE POLICY "Authorized members can insert children" ON children
   FOR INSERT WITH CHECK (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin') 
-      OR public.user_has_role('parent')
+      auth.user_has_role('admin') 
+      OR auth.user_has_role('parent')
       OR EXISTS (
         SELECT 1 FROM family_members 
         WHERE user_id = auth.uid() 
@@ -133,10 +133,10 @@ CREATE POLICY "Authorized members can insert children" ON children
 DROP POLICY IF EXISTS "Authorized members can update children" ON children;
 CREATE POLICY "Authorized members can update children" ON children
   FOR UPDATE USING (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin') 
-      OR public.user_has_role('parent')
+      auth.user_has_role('admin') 
+      OR auth.user_has_role('parent')
       OR EXISTS (
         SELECT 1 FROM family_members 
         WHERE user_id = auth.uid() 
@@ -148,8 +148,8 @@ CREATE POLICY "Authorized members can update children" ON children
 DROP POLICY IF EXISTS "Authorized members can delete children" ON children;
 CREATE POLICY "Authorized members can delete children" ON children
   FOR DELETE USING (
-    family_id = public.get_user_family_id()
-    AND (public.user_has_role('admin') OR public.user_has_role('parent'))
+    family_id = auth.user_family_id()
+    AND (auth.user_has_role('admin') OR auth.user_has_role('parent'))
   );
 
 -- ============================================
@@ -158,16 +158,16 @@ CREATE POLICY "Authorized members can delete children" ON children
 
 DROP POLICY IF EXISTS "Family members can view books" ON books;
 CREATE POLICY "Family members can view books" ON books
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Authorized members can create books" ON books;
 CREATE POLICY "Authorized members can create books" ON books
   FOR INSERT WITH CHECK (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin') 
-      OR public.user_has_role('parent')
-      OR public.user_has_role('caregiver')
+      auth.user_has_role('admin') 
+      OR auth.user_has_role('parent')
+      OR auth.user_has_role('caregiver')
       OR EXISTS (
         SELECT 1 FROM family_members 
         WHERE user_id = auth.uid() 
@@ -179,10 +179,10 @@ CREATE POLICY "Authorized members can create books" ON books
 DROP POLICY IF EXISTS "Authorized members can update books" ON books;
 CREATE POLICY "Authorized members can update books" ON books
   FOR UPDATE USING (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin') 
-      OR public.user_has_role('parent')
+      auth.user_has_role('admin') 
+      OR auth.user_has_role('parent')
       OR created_by = auth.uid()
     )
   );
@@ -190,8 +190,8 @@ CREATE POLICY "Authorized members can update books" ON books
 DROP POLICY IF EXISTS "Authorized members can delete books" ON books;
 CREATE POLICY "Authorized members can delete books" ON books
   FOR DELETE USING (
-    family_id = public.get_user_family_id()
-    AND (public.user_has_role('admin') OR public.user_has_role('parent'))
+    family_id = auth.user_family_id()
+    AND (auth.user_has_role('admin') OR auth.user_has_role('parent'))
   );
 
 -- ============================================
@@ -201,7 +201,7 @@ CREATE POLICY "Authorized members can delete books" ON books
 DROP POLICY IF EXISTS "Family members can view book pages" ON book_pages;
 CREATE POLICY "Family members can view book pages" ON book_pages
   FOR SELECT USING (
-    book_id IN (SELECT id FROM books WHERE family_id = public.get_user_family_id())
+    book_id IN (SELECT id FROM books WHERE family_id = auth.user_family_id())
   );
 
 DROP POLICY IF EXISTS "Authorized members can manage book pages" ON book_pages;
@@ -209,7 +209,7 @@ CREATE POLICY "Authorized members can manage book pages" ON book_pages
   FOR ALL USING (
     book_id IN (
       SELECT id FROM books 
-      WHERE family_id = public.get_user_family_id()
+      WHERE family_id = auth.user_family_id()
       AND (
         created_by = auth.uid()
         OR EXISTS (
@@ -228,13 +228,13 @@ CREATE POLICY "Authorized members can manage book pages" ON book_pages
 DROP POLICY IF EXISTS "Family members can view translations" ON book_translations;
 CREATE POLICY "Family members can view translations" ON book_translations
   FOR SELECT USING (
-    book_id IN (SELECT id FROM books WHERE family_id = public.get_user_family_id())
+    book_id IN (SELECT id FROM books WHERE family_id = auth.user_family_id())
   );
 
 DROP POLICY IF EXISTS "Family members can create translations" ON book_translations;
 CREATE POLICY "Family members can create translations" ON book_translations
   FOR INSERT WITH CHECK (
-    book_id IN (SELECT id FROM books WHERE family_id = public.get_user_family_id())
+    book_id IN (SELECT id FROM books WHERE family_id = auth.user_family_id())
   );
 
 -- ============================================
@@ -244,13 +244,13 @@ CREATE POLICY "Family members can create translations" ON book_translations
 DROP POLICY IF EXISTS "Family members can view story memory" ON story_memory;
 CREATE POLICY "Family members can view story memory" ON story_memory
   FOR SELECT USING (
-    child_id IN (SELECT id FROM children WHERE family_id = public.get_user_family_id())
+    child_id IN (SELECT id FROM children WHERE family_id = auth.user_family_id())
   );
 
 DROP POLICY IF EXISTS "System can manage story memory" ON story_memory;
 CREATE POLICY "System can manage story memory" ON story_memory
   FOR ALL USING (
-    child_id IN (SELECT id FROM children WHERE family_id = public.get_user_family_id())
+    child_id IN (SELECT id FROM children WHERE family_id = auth.user_family_id())
   );
 
 -- ============================================
@@ -259,11 +259,11 @@ CREATE POLICY "System can manage story memory" ON story_memory
 
 DROP POLICY IF EXISTS "Family members can view voice profiles" ON voice_profiles;
 CREATE POLICY "Family members can view voice profiles" ON voice_profiles
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Family members can manage voice profiles" ON voice_profiles;
 CREATE POLICY "Family members can manage voice profiles" ON voice_profiles
-  FOR ALL USING (family_id = public.get_user_family_id());
+  FOR ALL USING (family_id = auth.user_family_id());
 
 -- ============================================
 -- NARRATIONS - Inherit from books
@@ -272,13 +272,13 @@ CREATE POLICY "Family members can manage voice profiles" ON voice_profiles
 DROP POLICY IF EXISTS "Family members can view narrations" ON narrations;
 CREATE POLICY "Family members can view narrations" ON narrations
   FOR SELECT USING (
-    book_id IN (SELECT id FROM books WHERE family_id = public.get_user_family_id())
+    book_id IN (SELECT id FROM books WHERE family_id = auth.user_family_id())
   );
 
 DROP POLICY IF EXISTS "Family members can manage narrations" ON narrations;
 CREATE POLICY "Family members can manage narrations" ON narrations
   FOR ALL USING (
-    book_id IN (SELECT id FROM books WHERE family_id = public.get_user_family_id())
+    book_id IN (SELECT id FROM books WHERE family_id = auth.user_family_id())
   );
 
 -- ============================================
@@ -287,14 +287,14 @@ CREATE POLICY "Family members can manage narrations" ON narrations
 
 DROP POLICY IF EXISTS "Family members can view subscription" ON subscriptions;
 CREATE POLICY "Family members can view subscription" ON subscriptions
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Only admins can manage subscription" ON subscriptions;
 CREATE POLICY "Only admins can manage subscription" ON subscriptions
   FOR UPDATE USING (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin')
+      auth.user_has_role('admin')
       OR EXISTS (
         SELECT 1 FROM family_members 
         WHERE user_id = auth.uid() 
@@ -309,13 +309,13 @@ CREATE POLICY "Only admins can manage subscription" ON subscriptions
 
 DROP POLICY IF EXISTS "Family members can view members" ON family_members;
 CREATE POLICY "Family members can view members" ON family_members
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Admins can manage members" ON family_members;
 CREATE POLICY "Admins can manage members" ON family_members
   FOR ALL USING (
-    family_id = public.get_user_family_id()
-    AND public.user_has_role('admin')
+    family_id = auth.user_family_id()
+    AND auth.user_has_role('admin')
   );
 
 -- ============================================
@@ -324,13 +324,13 @@ CREATE POLICY "Admins can manage members" ON family_members
 
 DROP POLICY IF EXISTS "Family members can view preferences" ON family_preferences;
 CREATE POLICY "Family members can view preferences" ON family_preferences
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Only parents/admins can update preferences" ON family_preferences;
 CREATE POLICY "Only parents/admins can update preferences" ON family_preferences
   FOR UPDATE USING (
-    family_id = public.get_user_family_id()
-    AND public.user_can_modify_settings()
+    family_id = auth.user_family_id()
+    AND auth.user_can_modify_settings()
   );
 
 -- ============================================
@@ -340,14 +340,14 @@ CREATE POLICY "Only parents/admins can update preferences" ON family_preferences
 DROP POLICY IF EXISTS "Family members can view child preferences" ON child_content_preferences;
 CREATE POLICY "Family members can view child preferences" ON child_content_preferences
   FOR SELECT USING (
-    child_id IN (SELECT id FROM children WHERE family_id = public.get_user_family_id())
+    child_id IN (SELECT id FROM children WHERE family_id = auth.user_family_id())
   );
 
 DROP POLICY IF EXISTS "Parents can manage child preferences" ON child_content_preferences;
 CREATE POLICY "Parents can manage child preferences" ON child_content_preferences
   FOR ALL USING (
-    child_id IN (SELECT id FROM children WHERE family_id = public.get_user_family_id())
-    AND public.user_can_modify_settings()
+    child_id IN (SELECT id FROM children WHERE family_id = auth.user_family_id())
+    AND auth.user_can_modify_settings()
   );
 
 -- ============================================
@@ -357,13 +357,13 @@ CREATE POLICY "Parents can manage child preferences" ON child_content_preference
 DROP POLICY IF EXISTS "Admins can view audit logs" ON parental_control_audit;
 CREATE POLICY "Admins can view audit logs" ON parental_control_audit
   FOR SELECT USING (
-    family_id = public.get_user_family_id()
-    AND public.user_has_role('admin')
+    family_id = auth.user_family_id()
+    AND auth.user_has_role('admin')
   );
 
 DROP POLICY IF EXISTS "System can insert audit logs" ON parental_control_audit;
 CREATE POLICY "System can insert audit logs" ON parental_control_audit
-  FOR INSERT WITH CHECK (family_id = public.get_user_family_id());
+  FOR INSERT WITH CHECK (family_id = auth.user_family_id());
 
 -- ============================================
 -- ONBOARDING_SESSIONS - Scoped to family
@@ -371,7 +371,7 @@ CREATE POLICY "System can insert audit logs" ON parental_control_audit
 
 DROP POLICY IF EXISTS "Users can access their onboarding sessions" ON onboarding_sessions;
 CREATE POLICY "Users can access their onboarding sessions" ON onboarding_sessions
-  FOR ALL USING (family_id = public.get_user_family_id());
+  FOR ALL USING (family_id = auth.user_family_id());
 
 -- ============================================
 -- FAMILY_INVITES - Scoped to family
@@ -379,14 +379,14 @@ CREATE POLICY "Users can access their onboarding sessions" ON onboarding_session
 
 DROP POLICY IF EXISTS "Family members can view invites" ON family_invites;
 CREATE POLICY "Family members can view invites" ON family_invites
-  FOR SELECT USING (family_id = public.get_user_family_id());
+  FOR SELECT USING (family_id = auth.user_family_id());
 
 DROP POLICY IF EXISTS "Admins can manage invites" ON family_invites;
 CREATE POLICY "Admins can manage invites" ON family_invites
   FOR ALL USING (
-    family_id = public.get_user_family_id()
+    family_id = auth.user_family_id()
     AND (
-      public.user_has_role('admin')
+      auth.user_has_role('admin')
       OR EXISTS (
         SELECT 1 FROM family_members 
         WHERE user_id = auth.uid() 

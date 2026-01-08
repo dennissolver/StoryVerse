@@ -21,7 +21,7 @@ $$;
 -- Helper function to get family_id for current user
 -- ============================================
 
-CREATE OR REPLACE FUNCTION public.get_user_family_id()
+CREATE OR REPLACE FUNCTION auth.user_family_id()
 RETURNS UUID AS $$
   SELECT family_id FROM public.user_profiles WHERE id = auth.uid()
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;

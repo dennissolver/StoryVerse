@@ -22,7 +22,7 @@ export default function SettingsPage() {
     const supabase = createClient();
     const { error } = await supabase
       .from('user_profiles')
-      .update({ full_name: fullName })
+      .update({ full_name: fullName } as any)
       .eq('id', user?.id);
 
     if (error) {

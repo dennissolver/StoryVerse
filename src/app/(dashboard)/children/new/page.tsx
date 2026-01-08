@@ -36,7 +36,7 @@ export default function NewChildPage() {
         preferred_language: 'en',
         photo_url: null,
         reading_level: null,
-      });
+      } as any);
       router.push('/children');
     } catch (error) {
       console.error('Error adding child:', error);

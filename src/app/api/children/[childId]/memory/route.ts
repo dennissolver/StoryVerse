@@ -1,16 +1,13 @@
-export const runtime = "nodejs";
-
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ childId: string }> }
+  { params }: { params: { childId: string } }
 ) {
-  const { childId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+  
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -18,7 +15,7 @@ export async function GET(
   const { data, error } = await supabase
     .from('story_memory')
     .select('*')
-    .eq('child_id', childId)
+    .eq('child_id', params.childId)
     .single();
 
   if (error && error.code !== 'PGRST116') {
@@ -30,21 +27,20 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ childId: string }> }
+  { params }: { params: { childId: string } }
 ) {
-  const { childId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+  
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await request.json();
-
+  
   const { data, error } = await supabase
     .from('story_memory')
-    .upsert({ child_id: childId, ...body })
+    .upsert({ child_id: params.childId, ...body })
     .select()
     .single();
 

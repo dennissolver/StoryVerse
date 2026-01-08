@@ -1,12 +1,10 @@
 node_modules/
 .next/
 .env*.local
-
-.env.*
-.env.localcopy
 .env
 .vercel
 *.tsbuildinfo
-
-.vercel
-.env*.local
+.env.localcopy
+.env*
+.env.localcopy
+.env*

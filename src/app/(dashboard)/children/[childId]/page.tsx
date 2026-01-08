@@ -13,7 +13,7 @@ import type { Child, Book } from '@/types/database';
 import Link from 'next/link';
 
 export default function ChildDetailPage() {
-  const params = useParams<{ childId: string }>();
+  const params = useParams();
   const router = useRouter();
   const [child, setChild] = useState<Child | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
@@ -21,7 +21,6 @@ export default function ChildDetailPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!params.childId) return;
       const supabase = createClient();
       const { data: childData } = await supabase.from('children').select('*').eq('id', params.childId).single();
       if (childData) {

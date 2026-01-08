@@ -1,5 +1,3 @@
-export const runtime = "nodejs";
-
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';

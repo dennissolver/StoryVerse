@@ -1,17 +1,14 @@
-export const runtime = "nodejs";
-
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { translateBookPages, isLanguageSupported, type LanguageCode } from '@/lib/translation';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> }
+  { params }: { params: { bookId: string } }
 ) {
-  const { bookId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+  
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -27,7 +24,7 @@ export async function POST(
     const { data: pages, error } = await supabase
       .from('book_pages')
       .select('id, page_number, text_content')
-      .eq('book_id', bookId)
+      .eq('book_id', params.bookId)
       .order('page_number');
 
     if (error || !pages) {
@@ -38,14 +35,14 @@ export async function POST(
     const { data: existingTranslation } = await supabase
       .from('book_translations')
       .select('*')
-      .eq('book_id', bookId)
+      .eq('book_id', params.bookId)
       .eq('language', targetLanguage)
       .single();
 
     if (existingTranslation) {
-      return NextResponse.json({
+      return NextResponse.json({ 
         translatedPages: existingTranslation.translated_pages,
-        cached: true
+        cached: true 
       });
     }
 
@@ -59,7 +56,7 @@ export async function POST(
     await supabase
       .from('book_translations')
       .insert({
-        book_id: bookId,
+        book_id: params.bookId,
         language: targetLanguage,
         translated_pages: translatedPages,
       });
@@ -73,12 +70,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ bookId: string }> }
+  { params }: { params: { bookId: string } }
 ) {
-  const { bookId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
+  
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -87,9 +83,9 @@ export async function GET(
   const { data: translations } = await supabase
     .from('book_translations')
     .select('language, created_at')
-    .eq('book_id', bookId);
+    .eq('book_id', params.bookId);
 
-  return NextResponse.json({
+  return NextResponse.json({ 
     availableLanguages: translations?.map(t => t.language) || ['en']
   });
 }
