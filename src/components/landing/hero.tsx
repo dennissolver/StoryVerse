@@ -9,8 +9,14 @@ import { BookOpen, Sparkles, Mic } from 'lucide-react';
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white">
-      <div className="absolute inset-0 bg-[url('/stars.svg')] opacity-50" />
-      
+      {/* Replaced stars.svg with CSS pattern */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }} />
+      </div>
+
       <div className="container relative py-24 md:py-32 lg:py-40">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -26,7 +32,7 @@ export function Hero() {
               AI-powered personalized stories from kindergarten to graduation.
               18 years. One story. They start as the hero. They end as the author.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link href="/signup">
                 <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg px-8">
@@ -34,9 +40,9 @@ export function Hero() {
                   Start Your Story
                 </Button>
               </Link>
-              <Link href="/demo">
+              <Link href="/how-it-works">
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8">
-                  Try Demo
+                  How It Works
                 </Button>
               </Link>
             </div>
