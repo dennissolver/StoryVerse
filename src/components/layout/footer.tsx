@@ -10,29 +10,27 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/how-it-works" className="hover:text-foreground">How It Works</Link></li>
               <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
-              <li><Link href="/demo" className="hover:text-foreground">Demo</Link></li>
+              <li><Link href="/gift" className="hover:text-foreground">Gift a Story</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/about" className="hover:text-foreground">About</Link></li>
-              <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h3 className="font-semibold mb-4">Account</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/privacy" className="hover:text-foreground">Privacy</Link></li>
-              <li><Link href="/terms" className="hover:text-foreground">Terms</Link></li>
+              <li><Link href="/login" className="hover:text-foreground">Login</Link></li>
+              <li><Link href="/signup" className="hover:text-foreground">Sign Up</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Connect</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="https://twitter.com" className="hover:text-foreground">Twitter</a></li>
-              <li><a href="https://linkedin.com" className="hover:text-foreground">LinkedIn</a></li>
+              <li><a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">Twitter</a></li>
+              <li><a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">LinkedIn</a></li>
             </ul>
           </div>
         </div>
