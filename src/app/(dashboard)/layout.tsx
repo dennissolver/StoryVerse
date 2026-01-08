@@ -1,41 +1,25 @@
-'use client';
+// File: src/app/(dashboard)/layout.tsx
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import { Sidebar } from '@/components/layout/sidebar';
-import { useUserStore } from '@/stores/user';
-import { Spinner } from '@/components/ui/spinner';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, fetchUser } = useUserStore();
-  const router = useRouter();
+export default async function DashboardLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [isLoading, user, router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
+  if (!user) {
+    redirect('/login');
   }
 
-  if (!user) return null;
-
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-8 bg-muted/30">
-        {children}
-      </main>
+      <main className="flex-1 p-6">{children}</main>
     </div>
   );
 }
